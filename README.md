@@ -7,7 +7,7 @@ Plugin com base no pyRevit com ferramentas e automações para a Secretaria de P
 1. Baixe e execute o arquivo `SEPE-Revit.bat`.
 2. Aparecerá uma janela do pyRevit, instale normalmente.
 3. Se solicitado, insira a senha (ver com TI).
-4. Reinincie o Revit, uma nova aba estará lá.
+4. Reinicie o Revit, uma nova aba estará lá.
 
 - Apesar do Plugin da SEPE ser leve, ele precisa baixar o pyRevit, o que pode demorar.
 - O arquivo de instalação fará tudo automaticamente. Qualquer dúvida, contatar a Célula BIM.
