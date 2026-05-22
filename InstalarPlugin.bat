@@ -2,7 +2,7 @@
 setlocal
 chcp 65001 >nul
 
-title Instalador SEPE-Revit
+title Instalador Plugin-Revit
 
 echo.
 echo  SSSSS  EEEEE  PPPPP   EEEEE
@@ -14,7 +14,7 @@ echo.
 echo Governo do Estado de Pernambuco
 echo Secretaria de Projetos Estrategicos
 echo.
-echo Bem-vindos ao plugin da SEPE!
+echo Bem-vindos ao Plugin da SEPE!
 echo.
 
 set INSTALLER=%USERPROFILE%\DC\ACCDocs\SEPE\BIBLIOTECA\Project Files\REVIT\PLUGIN DA SEPE\pyRevit_CLI_6.4.0.26100_signed.exe
