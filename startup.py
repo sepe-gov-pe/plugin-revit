@@ -2,7 +2,7 @@ import subprocess
 
 try:
     result = subprocess.check_output(
-        "pyrevit extensions update SEPE-Revit --debug",
+        "pyrevit extensions update plugin-revit --debug",
         shell=True,
         creationflags=0x08000000,
     )
