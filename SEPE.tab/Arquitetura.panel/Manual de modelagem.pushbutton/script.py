@@ -5,7 +5,9 @@ import webbrowser
 from pyrevit import forms, script
 
 usuario = os.environ.get("USERNAME")
-manual_path = f"C:\\Users\\{usuario}\\DC\\ACCDocs\\SEPE\\BIBLIOTECA\\Project Files\\REVIT\\ARQUITETURA\\01_TEMPLATE\\MANUAL_SEPE_ARQUITETURA.pdf"
+manual_path = "C:\\Users\\{}\\DC\\ACCDocs\\SEPE\\BIBLIOTECA\\Project Files\\REVIT\\ARQUITETURA\\01_TEMPLATE\\MANUAL_SEPE_ARQUITETURA.pdf".format(
+    usuario
+)
 
 
 def main():
@@ -16,14 +18,14 @@ def main():
             script.exit()
 
         forms.alert(
-            f"Manual não encontrado!\n\n"
-            f"Usuário atual: {usuario}\n"
-            f"Caminho buscado:\n{manual_path}\n\n"
-            "Verifique se o arquivo existe neste local.",
+            "Manual não encontrado!\n\n"
+            "Usuário atual: {}\n"
+            "Caminho buscado:\n{}\n\n"
+            "Verifique se o arquivo existe neste local.".format(usuario, manual_path),
             title="Erro - Manual de modelagem",
         )
     except Exception as e:
-        forms.alert(f"Erro ao abrir o manual:\n{str(e)}", title="Erro")
+        forms.alert("Erro ao abrir o manual:\n{}".format(str(e)), title="Erro")
 
 
 if __name__ == "__main__":
