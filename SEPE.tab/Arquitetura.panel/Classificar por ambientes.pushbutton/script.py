@@ -1,128 +1,155 @@
 # -*- coding: utf-8 -*-
 #! ironpython3
 
-"""Classifica todas as paredes por ambiente."""
+"""Classifica elementos por ambiente."""
 
 from Autodesk.Revit.DB import (
     XYZ,
+    BuiltInCategory,
     BuiltInParameter,
     FilteredElementCollector,
     Transaction,
-    Wall,
 )
 
 doc = __revit__.ActiveUIDocument.Document
 
-OFFSET = 0.003
-PARAM_AMBIENTE = "Ambiente"
+
+def get_elementos(doc, categorias):
+    elementos = {}
+    for nome_categoria, ref_categoria in categorias.items():
+        elementos[nome_categoria] = (
+            FilteredElementCollector(doc)
+            .OfCategory(ref_categoria)
+            .WhereElementIsNotElementType()
+            .ToElements()
+        )
+    return elementos
 
 
-def get_point(wall):
-    """Retorna um ponto à frente da face externa da parede."""
-    loc = wall.Location
-    curve = loc.Curve
-
-    tangent = curve.ComputeDerivatives(0.5, True).BasisX.Normalize()
-    local_normal = XYZ(-tangent.Y, tangent.X, 0.0)
-
-    if local_normal.DotProduct(wall.Orientation) < 0:
-        local_normal = XYZ(-local_normal.X, -local_normal.Y, 0.0)
-
-    offset = (wall.Width / 2.0) + OFFSET
-    base_point = curve.Evaluate(0.5, True)
-    point = base_point + local_normal.Multiply(offset)
-
-    bbox = wall.get_BoundingBox(None)
-    z_mid = (bbox.Min.Z + bbox.Max.Z) / 2.0
-
-    return XYZ(point.X, point.Y, z_mid)
+def get_fase(elemento, doc):
+    fase_id = elemento.get_Parameter(BuiltInParameter.PHASE_CREATED).AsElementId()
+    return doc.GetElement(fase_id)
 
 
-def get_walls(doc):
-    """Lista com todas as paredes do projeto."""
-    return (
-        FilteredElementCollector(doc)
-        .OfClass(Wall)
-        .WhereElementIsNotElementType()
-        .ToElements()
-    )
+def get_ambiente(ponto, fase, doc):
+    return doc.GetRoomAtPoint(ponto, fase)
 
 
-def get_phase(wall, doc):
-    """Pega fase de criação da parede."""
-    phase_id = wall.get_Parameter(BuiltInParameter.PHASE_CREATED).AsElementId()
-    return doc.GetElement(phase_id)
+def get_nivel_ambiente(ambiente):
+    return ambiente.Level.Name
 
 
-def get_ambient(point, phase, doc):
-    """Retorna o ambiente (room) no ponto dado."""
-    return doc.GetRoomAtPoint(point, phase)
-
-
-def get_element_level(room):
-    """Retorna o nome do nível do ambiente."""
-
-    level = room.Level
-
-    if level:
-        return level.Name
-
-    return None
-
-
-def get_element_name(element):
-    """Retorna o nome do ambiente."""
-
-    name_param = element.get_Parameter(BuiltInParameter.ROOM_NAME)
-
-    if name_param and name_param.HasValue:
-        return name_param.AsString()
-
+def get_nome_ambiente(ambiente):
+    nome_ambiente = ambiente.get_Parameter(BuiltInParameter.ROOM_NAME)
+    if nome_ambiente and nome_ambiente.HasValue:
+        return nome_ambiente.AsString()
     return "AMBIENTE SEM NOME"
 
 
-def set_ambient(wall, nome):
-    """Define o parâmetro Ambiente da parede."""
-    param = wall.LookupParameter(PARAM_AMBIENTE)
+def set_ambiente(elemento, nome):
+    param = elemento.LookupParameter("Ambiente")  # implementar parâmetro compartilhado!
     if param and not param.IsReadOnly:
         param.Set(nome)
         return True
     return False
 
 
+def get_ponto_outros(elemento):
+    bbox = elemento.get_BoundingBox(None)
+    if bbox is None:
+        return None
+
+    return (bbox.Min + bbox.Max) * 0.5
+
+
+def get_ponto_piso_forro(piso):
+    pass
+
+
+def get_ponto_parede(parede):
+    offset = 0.003
+    offset += parede.Width / 2.0
+
+    loc = parede.Location
+    curva = loc.Curve
+
+    tangente = curva.ComputeDerivatives(0.5, True).BasisX.Normalize()
+    local_normal = XYZ(-tangente.Y, tangente.X, 0.0)
+
+    if local_normal.DotProduct(parede.Orientation) < 0:
+        local_normal = XYZ(-local_normal.X, -local_normal.Y, 0.0)
+
+    ponto = curva.Evaluate(0.5, True)
+    ponto += local_normal.Multiply(offset)
+
+    bbox = parede.get_BoundingBox(None)
+    z_mid = (bbox.Min.Z + bbox.Max.Z) / 2.0
+
+    return XYZ(ponto.X, ponto.Y, z_mid)
+
+
 def main(doc):
-    """Função principal."""
-    walls = get_walls(doc)
+    categorias = {
+        "parede": BuiltInCategory.OST_Walls,
+        "piso": BuiltInCategory.OST_Floors,
+        "forro": BuiltInCategory.OST_Ceilings,
+        "peca_hid": BuiltInCategory.OST_PlumbingFixtures,
+        "mobiliario": BuiltInCategory.OST_Furniture,
+    }
 
-    with Transaction(doc, "SEPE - Identificar Ambiente") as t:
-        t.Start()
-        try:
-            for wall in walls:
-                phase = get_phase(wall, doc)
-                if phase is None:
-                    continue
+    funcao_get_ponto = {
+        "parede": get_ponto_parede,
+        "piso": get_ponto_piso_forro,
+        "forro": get_ponto_piso_forro,
+        "peca_hid": get_ponto_outros,
+        "mobiliario": get_ponto_outros,
+    }
 
-                point = get_point(wall)
-                if point is None:
-                    continue
+    elementos = get_elementos(doc, categorias)
+    alteracoes = []
 
-                ambient = get_ambient(point, phase, doc)
-                if ambient is None:
-                    continue
+    for categoria, elementos_categoria in elementos.items():
+        get_ponto = funcao_get_ponto[categoria]
 
-                ambient_level = get_element_level(ambient)
-                ambient_name = get_element_name(ambient)
+        for elemento in elementos_categoria:
+            ponto = get_ponto(elemento)
+            if ponto is None:
+                continue
 
-                ambient_string = "{} - {}".format(ambient_level, ambient_name)
-                set_ambient(wall, ambient_string)
+            fase = get_fase(elemento, doc)
+            if fase is None:
+                continue
 
-            t.Commit()
+            ambiente = get_ambiente(ponto, fase, doc)
+            if ambiente is None:
+                continue
 
-        except Exception as ex:
-            t.RollBack()
-            print("Erro durante o processamento: {}".format(str(ex)))
-            raise
+            nivel_ambiente = get_nivel_ambiente(ambiente)
+            nome_ambiente = get_nome_ambiente(ambiente)
+            ambiente_completo = "{} - {}".format(
+                nivel_ambiente,
+                nome_ambiente,
+            )
+
+            alteracoes.append((elemento, ambiente_completo))
+
+    t = Transaction(doc, "Classificar por ambiente")
+    t.Start()
+
+    try:
+        for elemento, ambiente_completo in alteracoes:
+            set_ambiente(elemento, ambiente_completo)
+
+        t.Commit()
+
+    except Exception as ex:
+        t.RollBack()
+        print("Erro durante o processamento: {}".format(str(ex)))
+        raise
 
 
 if __name__ == "__main__":
     main(doc)
+
+# CRIAR FUNÇÃO PARA CHECAR PARÂMETRO DE AMBIENTE. SE NÃO HOUVER CRIAR UM COMPARTILHADO
+# ADICIONAR ÁREA NO TÍTULO DO AMBIENTE, ÚTIL PARA ARGAMASSAS NAS PAREDE. PODE CONFLITAR COM QUANTITATIVO DE PISOS...
