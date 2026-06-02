@@ -1,13 +1,19 @@
+import os
 import subprocess
 
-try:
-    result = subprocess.check_output(
-        "pyrevit extensions update plugin-revit --debug",
-        shell=True,
-        creationflags=0x08000000,
-    )
+atualizar = not os.path.exists("nao_atualizar.flag")
 
-    result = str(result).lower()
+if atualizar:
+    print("Atualizar")
+    try:
+        subprocess.check_output(
+            "pyrevit extensions update plugin-revit --debug",
+            shell=True,
+            creationflags=0x08000000,
+        )
 
-except Exception as e:
-    print("ERRO ao iniciar update: {}".format(e))
+    except Exception as e:
+        print("ERRO ao iniciar update: {}".format(e))
+
+else:
+    print("Não atualizar")
