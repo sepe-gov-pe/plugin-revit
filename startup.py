@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-atualizar = not os.path.exists("nao_atualizar.flag")
+atualizar = not os.path.exists("nao_atualizar")
 
 if atualizar:
     try:
