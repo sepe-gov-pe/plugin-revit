@@ -2,8 +2,8 @@ import os
 import subprocess
 
 pasta = os.path.dirname(os.path.abspath(__file__))
-dev_flag = os.path.join(pasta, "DEV")
-atualizar = not os.path.exists(dev_flag)
+modo_dev = os.path.join(pasta, "MODO_DEV")
+atualizar = not os.path.exists(modo_dev)
 
 if atualizar:
     try:
