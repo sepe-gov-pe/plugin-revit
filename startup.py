@@ -1,7 +1,9 @@
 import os
 import subprocess
 
-atualizar = not os.path.exists("nao_atualizar")
+pasta = os.path.dirname(os.path.abspath(__file__))
+flag = os.path.join(pasta, "nao_atualizar.flag")
+atualizar = not os.path.exists(flag)
 
 if atualizar:
     try:
