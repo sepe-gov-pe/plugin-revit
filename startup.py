@@ -6,7 +6,6 @@ dev_flag = os.path.join(pasta, "DEV")
 atualizar = not os.path.exists(dev_flag)
 
 if atualizar:
-    print("atualizou")
     try:
         subprocess.check_output(
             "pyrevit extensions update plugin-revit --debug",
