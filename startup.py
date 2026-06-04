@@ -13,5 +13,5 @@ if atualizar:
             creationflags=0x08000000,
         )
 
-    except Exception as e:
-        print("ERRO ao iniciar update: {}".format(e))
+    except Exception:
+        pass
