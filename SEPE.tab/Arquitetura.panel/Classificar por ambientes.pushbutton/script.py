@@ -73,7 +73,7 @@ def get_ponto_parede(parede):
         curva = loc.Curve
         orientacao = parede.Orientation
 
-    except AttributeError:
+    except Exception:
         return None
 
     tangente = curva.ComputeDerivatives(0.5, True).BasisX.Normalize()
