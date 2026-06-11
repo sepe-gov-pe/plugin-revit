@@ -12,7 +12,6 @@ if atualizar:
             shell=True,
             creationflags=0x08000000,
         )
-        print("Plugin da SEPE atualizado!")
 
     except Exception:
         pass
