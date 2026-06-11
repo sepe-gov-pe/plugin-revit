@@ -67,16 +67,19 @@ def get_ponto_piso_forro(piso):
 
 
 def get_ponto_parede(parede):
-    offset = 0.003
-    offset += parede.Width / 2.0
+    try:
+        offset = 0.003 + parede.Width / 2.0
+        loc = parede.Location
+        curva = loc.Curve
+        orientacao = parede.Orientation
 
-    loc = parede.Location
-    curva = loc.Curve
+    except AttributeError:
+        return None
 
     tangente = curva.ComputeDerivatives(0.5, True).BasisX.Normalize()
     local_normal = XYZ(-tangente.Y, tangente.X, 0.0)
 
-    if local_normal.DotProduct(parede.Orientation) < 0:
+    if local_normal.DotProduct(orientacao) < 0:
         local_normal = XYZ(-local_normal.X, -local_normal.Y, 0.0)
 
     ponto = curva.Evaluate(0.5, True)
@@ -150,6 +153,3 @@ def main(doc):
 
 if __name__ == "__main__":
     main(doc)
-
-# CRIAR FUNÇÃO PARA CHECAR PARÂMETRO DE AMBIENTE. SE NÃO HOUVER CRIAR UM COMPARTILHADO
-# ADICIONAR ÁREA NO TÍTULO DO AMBIENTE, ÚTIL PARA ARGAMASSAS NAS PAREDE. PODE CONFLITAR COM QUANTITATIVO DE PISOS...
